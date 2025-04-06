@@ -1,11 +1,6 @@
 ﻿using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace QuestPDFSampleProject
 {
@@ -111,6 +106,94 @@ namespace QuestPDFSampleProject
                     ComposeCompanyInfo(row.RelativeItem());
 
                     ComposeCustomerInfo(row.RelativeItem());
+
+                    column.Item().PaddingTop(20).Element(ComposeTable);
+
+                    column.Item().PaddingTop(10).Row(row =>
+                    {
+                        // Empty space
+                        row.RelativeItem(3);
+
+                        // Totals section
+                        row.RelativeItem(2).Border(1).BorderColor(Colors.Grey.Medium).Padding(5).Column(totalColumn =>
+                        {
+                            totalColumn.Item().Row(tr =>
+                            {
+                                tr.RelativeItem().Text("Subtotal:").SemiBold();
+                                tr.RelativeItem().AlignRight().Text("$1,779.83");
+                            });
+
+                            totalColumn.Item().Row(tr =>
+                            {
+                                tr.RelativeItem().Text("Tax (9%):").SemiBold();
+                                tr.RelativeItem().AlignRight().Text("$160.18");
+                            });
+
+                            totalColumn.Item().Row(tr =>
+                            {
+                                tr.RelativeItem().Text("Total:").FontSize(12).Bold();
+                                tr.RelativeItem().AlignRight().Text("$1,940.01").FontSize(12).Bold();
+                            });
+                        });
+                    });
+
+                    // Notes section
+                    column.Item().PaddingTop(20).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn();
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Grey.Lighten2).Padding(5)
+                                .Text("Notes").Bold();
+                        });
+
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10)
+                            .Text(report.Notes);
+                    });
+
+                    column.Item().PaddingTop(20).Background(Colors.Grey.Lighten3).Padding(10)
+                .Column(paymentColumn =>
+                {
+                    paymentColumn.Item().Text("Payment Methods").Bold();
+                    paymentColumn.Item().PaddingTop(5).Row(row =>
+                    {
+                        // Method 1
+                        row.RelativeItem().Border(1).BorderColor(Colors.Grey.Medium)
+                            .Background(Colors.White).Padding(5).Column(c =>
+                            {
+                                c.Item().Text("Bank Transfer").Bold();
+                                c.Item().Text("Account: 123456789");
+                                c.Item().Text("Routing: 987654321");
+                            });
+
+                        row.Spacing(10);
+
+                        // Method 2
+                        row.RelativeItem().Border(1).BorderColor(Colors.Grey.Medium)
+                            .Background(Colors.White).Padding(5).Column(c =>
+                            {
+                                c.Item().Text("Credit Card").Bold();
+                                c.Item().Text("Visa, MasterCard, Amex");
+                                c.Item().Text("Online payment: acmecorp.com/pay");
+                            });
+
+                        row.Spacing(10);
+
+                        // Method 3
+                        row.RelativeItem().Border(1).BorderColor(Colors.Grey.Medium)
+                            .Background(Colors.White).Padding(5).Column(c =>
+                            {
+                                c.Item().Text("PayPal").Bold();
+                                c.Item().Text("payments@acmecorp.com");
+                                c.Item().Text("Include invoice # in notes");
+                            });
+                    });
+                });
+
                 });
             });
         }
@@ -161,6 +244,69 @@ namespace QuestPDFSampleProject
             });
         }
 
+        static void ComposeTable(IContainer container)
+        {
+            container.Table(table =>
+            {
+                // Define columns
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(1);    // SKU
+                    columns.RelativeColumn(3);    // Item
+                    columns.RelativeColumn(1);    // Quantity
+                    columns.RelativeColumn(1);    // Unit Price
+                    columns.RelativeColumn(1);    // Amount
+                });
+
+                // Style for all cells
+                static IContainer DefaultCellStyle(IContainer container, string backgroundColor = "#FFFFFF")
+                {
+                    return container
+                        .Border(0.5f)
+                        .BorderColor(Colors.Grey.Lighten1)
+                        .Background(backgroundColor)
+                        .Padding(5);
+                }
+
+                // Table header
+                table.Header(header =>
+                {
+                    header.Cell().Element(c => DefaultCellStyle(c, Colors.Grey.Lighten2))
+                        .Text("SKU").Bold();
+                    header.Cell().Element(c => DefaultCellStyle(c, Colors.Grey.Lighten2))
+                        .Text("Item").Bold();
+                    header.Cell().Element(c => DefaultCellStyle(c, Colors.Grey.Lighten2))
+                        .AlignRight().Text("Quantity").Bold();
+                    header.Cell().Element(c => DefaultCellStyle(c, Colors.Grey.Lighten2))
+                        .AlignRight().Text("Unit Price").Bold();
+                    header.Cell().Element(c => DefaultCellStyle(c, Colors.Grey.Lighten2))
+                        .AlignRight().Text("Amount").Bold();
+                });
+
+                // Table contents
+                // Row 1
+                string[] skus = { "PROD-001", "PROD-002", "PROD-003", "SERV-001", "SERV-002" };
+                string[] items = { "Premium Laptop", "Wireless Mouse", "External SSD 1TB", "Extended Warranty", "Technical Support (Monthly)" };
+                int[] qtys = { 1, 2, 1, 1, 12 };
+                decimal[] unitPrices = { 1299.99m, 29.99m, 159.99m, 199.99m, 19.99m };
+
+                for (int i = 0; i < skus.Length; i++)
+                {
+                    string bgColor = i % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+
+                    table.Cell().Element(c => DefaultCellStyle(c, bgColor))
+                        .Text(skus[i]);
+                    table.Cell().Element(c => DefaultCellStyle(c, bgColor))
+                        .Text(items[i]);
+                    table.Cell().Element(c => DefaultCellStyle(c, bgColor))
+                        .AlignRight().Text(qtys[i].ToString());
+                    table.Cell().Element(c => DefaultCellStyle(c, bgColor))
+                        .AlignRight().Text($"${unitPrices[i]:N2}");
+                    table.Cell().Element(c => DefaultCellStyle(c, bgColor))
+                        .AlignRight().Text($"${qtys[i] * unitPrices[i]:N2}");
+                }
+            });
+        }
 
     }
 
